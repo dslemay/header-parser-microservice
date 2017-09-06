@@ -1,4 +1,5 @@
 var express = require('express'),
+    parse = require('ua-parser-js'),
     app = express();
 
 app.set('port', process.env.PORT || 8080);
@@ -8,10 +9,22 @@ app.get('/api/whoami', function(req, res) {
   req.on('error', function(err) {
     console.log(err);
   });
-  console.log(req.headers);
+  var language = req.headers['accept-language'].split(',')[0],
+      ipHeader = req.headers['x-forwarded-for'],
+      ip = ipHeader !== undefined ? ipHeader.split(',')[0] : undefined;
 
+  var userAgent = parse(req.headers['user-agent']),
+      browser = userAgent.browser,
+      os = userAgent.os,
+      software = browser.name + " v" + browser.major + "; " + os.name + " " + os.version;
 
-  res.end();
+  var obj = {
+    ipaddress: ip,
+    language: language,
+    software: software
+  }
+
+  res.send(obj);
 })
 
 app.on('error', function(err) {
